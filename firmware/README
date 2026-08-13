@@ -1,0 +1,25 @@
+https://docs.espressif.com/projects/esp-idf/en/v5.0.4/esp32c3/get-started/linux-macos-setup.html
+
+sudo apt-get install git wget flex bison gperf python3 python3-pip python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+
+Install esp-idf:
+mkdir -p ~/esp
+cd ~/esp
+git clone -b v6.0.2 --recursive https://github.com/espressif/esp-idf.git
+cd esp-idf
+./install.sh esp32c3
+. $HOME/esp/esp-idf/export.sh
+
+In the project path:
+. $HOME/esp/esp-idf/export.sh
+idf.py set-target esp32c3
+idf.py menuconfig (enable bluetooth and 4.2 compatibility)
+idf.py build
+idf.py flash
+
+idf.py fullclean to clean the build artifacts
+port permissions:
+sudo usermod -a -G dialout $USER
+somehow did not work
+newgrp dialout did work
+the device identifies as /dev/ttyACM0

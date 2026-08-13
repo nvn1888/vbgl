@@ -8,6 +8,7 @@
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_log_buffer.h"
 #include "nvs_flash.h"
 #include "esp_bt.h"
 
@@ -28,7 +29,7 @@
 #define SVC_INST_ID             0
 
 /* The max length of characteristic value. When the GATT client performs
- * a write or prepare write operation, the data length must be less than 
+ * a write or prepare write operation, the data length must be less than
  * GATTS_DEMO_CHAR_VAL_LEN_MAX.
 */
 #define GATTS_DEMO_CHAR_VAL_LEN_MAX 500
@@ -136,7 +137,7 @@ static const uint16_t GATTS_CHAR_UUID_TEST_A = 0xFF01;
 static const uint16_t GATTS_CHAR_UUID_TEST_B = 0xFF02;
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 static const uint16_t character_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
-static const uint8_t char_prop_read_write = 
+static const uint8_t char_prop_read_write =
 	ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_READ;
 
 static void print_values()
@@ -238,7 +239,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 	}
 }
 
-void example_prepare_write_event_env(esp_gatt_if_t gatts_if, 
+void example_prepare_write_event_env(esp_gatt_if_t gatts_if,
 	prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
 {
 	ESP_LOGI(GATTS_TABLE_TAG, "prepare write, handle = %d, value len = %d",
@@ -251,7 +252,7 @@ void example_prepare_write_event_env(esp_gatt_if_t gatts_if,
 		status = ESP_GATT_INVALID_ATTR_LEN;
 	}
 	if (status == ESP_GATT_OK && prepare_write_env->prepare_buf == NULL) {
-		prepare_write_env->prepare_buf = 
+		prepare_write_env->prepare_buf =
 			(uint8_t *)malloc(PREPARE_BUF_MAX_SIZE * sizeof(uint8_t));
 		prepare_write_env->prepare_len = 0;
 		if (prepare_write_env->prepare_buf == NULL) {
@@ -294,7 +295,7 @@ void example_exec_write_event_env(prepare_type_env_t *prepare_write_env,
 	esp_ble_gatts_cb_param_t *param) {
 	if (param->exec_write.exec_write_flag == ESP_GATT_PREP_WRITE_EXEC &&
 		prepare_write_env->prepare_buf){
-		esp_log_buffer_hex(GATTS_TABLE_TAG, prepare_write_env->prepare_buf,
+		ESP_LOG_BUFFER_HEX(GATTS_TABLE_TAG, prepare_write_env->prepare_buf,
 			prepare_write_env->prepare_len);
 	}else{
 		ESP_LOGI(GATTS_TABLE_TAG,"ESP_GATT_PREP_WRITE_CANCEL");
@@ -312,7 +313,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 	esp_err_t ret;
 	switch (event) {
 		case ESP_GATTS_REG_EVT:
-			ret = esp_bt_dev_set_device_name(dev_name);
+			ret = esp_ble_gap_set_device_name(dev_name);
 			if (ret){
 				ESP_LOGE(GATTS_TABLE_TAG,
 					"set device name failed, error code = %x", ret);
@@ -349,7 +350,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 				ESP_LOGI(GATTS_TABLE_TAG,
 					"GATT_WRITE_EVT, handle = %d, value len = %d, value :",
 					param->write.handle, param->write.len);
-				esp_log_buffer_hex(GATTS_TABLE_TAG, param->write.value,
+				ESP_LOG_BUFFER_HEX(GATTS_TABLE_TAG, param->write.value,
 					param->write.len);
 				if (param->write.handle == handle_table[2]) {
 					memcpy(char_value, param->write.value, param->write.len <
@@ -393,7 +394,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 		case ESP_GATTS_CONNECT_EVT:
 			ESP_LOGI(GATTS_TABLE_TAG,
 				"ESP_GATTS_CONNECT_EVT, conn_id = %d", param->connect.conn_id);
-			esp_log_buffer_hex(GATTS_TABLE_TAG, param->connect.remote_bda, 6);
+			ESP_LOG_BUFFER_HEX(GATTS_TABLE_TAG, param->connect.remote_bda, 6);
 			esp_ble_conn_update_params_t conn_params = {0};
 			memcpy (conn_params.bda, param->connect.remote_bda,
 				sizeof(esp_bd_addr_t));
@@ -517,7 +518,7 @@ void ble_init(void)
 		return;
 	}
 
-	{ 
+	{
 		const uint8_t *mac = esp_bt_dev_get_address();
 		if (mac != NULL) {
 			printf("mac addr ending: %02x%02x%02x\n", *(mac+3), *(mac + 4), *(mac + 5));
